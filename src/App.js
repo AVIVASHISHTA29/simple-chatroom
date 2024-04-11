@@ -1,19 +1,20 @@
-import { addDoc, collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { addDoc, collection, limit, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import "./App.css";
 import db from './firebase';
 
 function App() {
-  const [messages, setMessages] = useState([]);
-  const [name, setName] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [name, setName] = useState(localStorage.getItem('chatUserName') || '');
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    const q = query(collection(db, 'messages'), orderBy('timestamp'), limit(20));
+    const q = query(collection(db, 'messages'), orderBy('timestamp', 'desc'), limit(20));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const newMessages = [];
       querySnapshot.forEach((doc) => {
-        newMessages.push(doc.data());
+        newMessages.unshift({ id: doc.id, ...doc.data() });
       });
       setMessages(newMessages);
     });
@@ -23,13 +24,24 @@ function App() {
     };
   }, []);
 
+  const handleNameInputChange = (e) => {
+    setNameInput(e.target.value);
+  };
+
+  const handleNameSubmit = (e) => {
+    e.preventDefault();
+    localStorage.setItem('chatUserName', nameInput);
+    setName(nameInput);
+    setNameInput('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (message.trim() !== '') {
       await addDoc(collection(db, 'messages'), {
         name,
         message,
-        timestamp: new Date(),
+        timestamp: serverTimestamp(),
       });
       setMessage('');
     }
@@ -37,29 +49,47 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Chat Room</h1>
-      <div className="messages">
-        {messages.map((msg, index) => (
-          <div key={index} className="message">
-            <strong>{msg.name}:</strong> {msg.message}
+      {!name && (
+        <form onSubmit={handleNameSubmit}>
+          <input
+            type="text"
+            value={nameInput}
+            onChange={handleNameInputChange}
+            placeholder="Enter your name"
+            required
+          />
+          <button type="submit">Join Chat</button>
+        </form>
+      )}
+      {name && (
+        <div className="chat-container">
+          <div className="messages">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`message ${msg.name === name ? 'me' : 'other'}`}
+              >
+                <div className="message-content">
+                  <strong>{msg.name}</strong>: {msg.message}
+                </div>
+                <div className="timestamp">
+                  {new Date(msg.timestamp?.toDate()).toLocaleString()}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Your Name"
-        />
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message"
-        />
-        <button type="submit">Send</button>
-      </form>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message"
+              required
+            />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
