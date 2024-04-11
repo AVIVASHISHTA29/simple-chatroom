@@ -1,7 +1,9 @@
 import { addDoc, collection, limit, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import "./App.css";
-import db from './firebase';
+import ImageUpload from './ImageUpload';
+import { db } from './firebase';
+
 
 function App() {
   const [nameInput, setNameInput] = useState('');
@@ -88,6 +90,7 @@ function App() {
             />
             <button type="submit">Send</button>
           </form>
+          <ImageUpload />
         </div>
       )}
     </div>
