@@ -78,7 +78,7 @@ function App() {
               </div>
             ))}
           </div>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className='message-input'>
             <input
               type="text"
               value={message}
