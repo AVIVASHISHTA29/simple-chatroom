@@ -2,6 +2,7 @@ import { addDoc, collection, limit, onSnapshot, orderBy, query } from 'firebase/
 import { useEffect, useState } from 'react';
 import "./App.css";
 import ImageUpload from './ImageUpload';
+import VoiceMemoUpload from './VoiceMemoUpload';
 import { db } from './firebase';
 
 function App() {
@@ -26,8 +27,21 @@ function App() {
           ...doc.data(),
         }));
 
-        const mergedItems = [...messages, ...images].sort((a, b) => a.timestamp - b.timestamp);
-        setChatItems(mergedItems);
+        const voiceQuery = query(collection(db, 'voice-memos'), orderBy('timestamp', 'desc'), limit(20));
+        const unsubscribeVoiceMemos = onSnapshot(voiceQuery, (voiceSnapshot) => {
+          const voiceMemos = voiceSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            type: 'voice',
+            ...doc.data(),
+          }));
+
+          const mergedItems = [...messages, ...images, ...voiceMemos].sort((a, b) => a.timestamp - b.timestamp);
+          setChatItems(mergedItems);
+        });
+
+        return () => {
+          unsubscribeVoiceMemos();
+        };
       });
 
       return () => {
@@ -39,6 +53,7 @@ function App() {
       unsubscribe();
     };
   }, []);
+
 
   const handleNameInputChange = (e) => {
     setNameInput(e.target.value);
@@ -103,6 +118,15 @@ function App() {
                     </div>
                   </div>
                 )}
+                {item.type === 'voice' && (
+                  <div className="voice-memo">
+                    <audio controls src={item.url}></audio>
+                    <div className="voice-memo-user">{item.userName}</div>
+                    <div className="timestamp">
+                      {new Date(item.timestamp?.toDate()).toLocaleString()}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -118,6 +142,7 @@ function App() {
             <button type="submit" className="send-button">Send</button>
           </form>
           <ImageUpload userName={name} />
+          <VoiceMemoUpload userName={name} />
         </div>
       )}
     </div>

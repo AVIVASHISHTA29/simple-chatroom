@@ -142,3 +142,29 @@ body {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
+.voice-memo-upload-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.start-recording-button,
+.stop-recording-button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.stop-recording-button {
+  background-color: #dc3545;
+}
+
+.start-recording-button:hover,
+.stop-recording-button:hover {
+  background-color: #0056b3;
+}
